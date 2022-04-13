@@ -1,4 +1,5 @@
 import {
+    AfterContentChecked,
     AfterContentInit,
     AfterViewInit,
     ChangeDetectionStrategy,
@@ -22,7 +23,7 @@ import {
     ViewChild,
     ViewEncapsulation
 } from '@angular/core';
-import { FocusKeyManager } from '@angular/cdk/a11y';
+import { FocusKeyManager, LiveAnnouncer } from '@angular/cdk/a11y';
 import { NgControl, NgForm } from '@angular/forms';
 import { SelectionModel } from '@angular/cdk/collections';
 import { DOWN_ARROW, ENTER, SPACE, UP_ARROW } from '@angular/cdk/keycodes';
@@ -64,9 +65,15 @@ export class SelectionChangeEvent {
     encapsulation: ViewEncapsulation.None,
     styleUrls: ['./list.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    providers: [{ provide: FormFieldControl, useExisting: ListComponent, multi: true }]
+    providers: [{ provide: FormFieldControl, useExisting: ListComponent, multi: true }],
+    host: {
+        '[attr.tabindex]': '-1'
+    }
 })
-export class ListComponent extends CollectionBaseInput implements OnInit, AfterViewInit, AfterContentInit, OnDestroy {
+export class ListComponent
+    extends CollectionBaseInput
+    implements OnInit, AfterViewInit, AfterContentInit, OnDestroy, AfterContentChecked
+{
     /**  An array that holds a list of all selected items**/
     @Input()
     selectedItems: BaseListItem[];
@@ -82,6 +89,10 @@ export class ListComponent extends CollectionBaseInput implements OnInit, AfterV
     /** Title used on button when data loads on button click */
     @Input()
     loadTitle: string;
+
+    /** Label used on announce message of data was loaded for screen readers */
+    @Input()
+    loadedLabel = 'Loaded';
 
     /** Wait time for new items */
     @Input()
@@ -104,7 +115,7 @@ export class ListComponent extends CollectionBaseInput implements OnInit, AfterV
 
     /** define the role to custom requirement */
     @Input()
-    role = 'list';
+    role = 'listbox';
 
     /** ListType 'inactive' | 'active' | 'navigation' | 'detail' */
     @Input()
@@ -205,6 +216,7 @@ export class ListComponent extends CollectionBaseInput implements OnInit, AfterV
     constructor(
         protected _changeDetectorRef: ChangeDetectorRef,
         public itemEl: ElementRef,
+        private _liveAnnouncer: LiveAnnouncer,
         @Optional() @Self() public ngControl: NgControl,
         @Optional() @Self() public ngForm: NgForm,
         @Optional() @SkipSelf() @Host() formField: FormField,
@@ -395,6 +407,18 @@ export class ListComponent extends CollectionBaseInput implements OnInit, AfterV
         });
     }
 
+    ngAfterContentChecked(): void {
+        if (!this.ariaSetsize) {
+            this.ariaSetsize = this.listItems.length;
+
+            for (let i = 0; i < this.listItems.length; i++) {
+                this.listItems.get(i).ariaPosinet = i + 1;
+            }
+
+            this._cd.markForCheck();
+        }
+    }
+
     /**
      * @hidden
      * Setting values from list to list items
@@ -506,6 +530,7 @@ export class ListComponent extends CollectionBaseInput implements OnInit, AfterV
                         this._items[i] = result[j];
                     }
                 }
+                this._liveAnnouncer.announce(this.loadedLabel, 'assertive');
                 this._loading = false;
                 this.stateChanges.next(this._items);
                 this._changeDetectorRef.markForCheck();
@@ -566,6 +591,15 @@ export class ListComponent extends CollectionBaseInput implements OnInit, AfterV
     _selectItem(item: BaseListItem): void {
         this._selectionModel.select(item);
         this.stateChanges.next(item);
+    }
+
+    /** @hidden */
+    trackByFn(index: number, item: BaseListItem): string | number {
+        if (item) {
+            return item.id;
+        }
+
+        return index;
     }
 
     /** @hidden */
