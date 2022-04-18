@@ -1,5 +1,4 @@
 import {
-    AfterContentChecked,
     AfterContentInit,
     AfterViewInit,
     ChangeDetectionStrategy,
@@ -70,10 +69,7 @@ export class SelectionChangeEvent {
         '[attr.tabindex]': '-1'
     }
 })
-export class ListComponent
-    extends CollectionBaseInput
-    implements OnInit, AfterViewInit, AfterContentInit, OnDestroy, AfterContentChecked
-{
+export class ListComponent extends CollectionBaseInput implements OnInit, AfterViewInit, AfterContentInit, OnDestroy {
     /**  An array that holds a list of all selected items**/
     @Input()
     selectedItems: BaseListItem[];
@@ -92,7 +88,7 @@ export class ListComponent
 
     /** Label used on announce message of data was loaded for screen readers */
     @Input()
-    loadedLabel = 'Loaded';
+    loadingLabel = 'Loading';
 
     /** Wait time for new items */
     @Input()
@@ -407,18 +403,6 @@ export class ListComponent
         });
     }
 
-    ngAfterContentChecked(): void {
-        if (!this.ariaSetsize) {
-            this.ariaSetsize = this.listItems.length;
-
-            for (let i = 0; i < this.listItems.length; i++) {
-                this.listItems.get(i).ariaPosinet = i + 1;
-            }
-
-            this._cd.markForCheck();
-        }
-    }
-
     /**
      * @hidden
      * Setting values from list to list items
@@ -454,6 +438,8 @@ export class ListComponent
                 this.stateChanges.next(item);
             });
         });
+
+        this._setAriaSize();
     }
 
     /** @hidden */
@@ -521,6 +507,8 @@ export class ListComponent
                     if (data === null || data === undefined) {
                         console.error('===Invalid Response recived===');
                     }
+
+                    this._liveAnnouncer.announce(this.loadingLabel, 'assertive');
                 }),
                 delay(this.delayTime)
             )
@@ -530,7 +518,6 @@ export class ListComponent
                         this._items[i] = result[j];
                     }
                 }
-                this._liveAnnouncer.announce(this.loadedLabel, 'assertive');
                 this._loading = false;
                 this.stateChanges.next(this._items);
                 this._changeDetectorRef.markForCheck();
@@ -596,7 +583,7 @@ export class ListComponent
     /** @hidden */
     trackByFn(index: number, item: BaseListItem): string | number {
         if (item) {
-            return item.id;
+            return item.id || item.name;
         }
 
         return index;
@@ -749,6 +736,19 @@ export class ListComponent
                 this.stateChanges.next(item);
             }
         });
+    }
+
+    /** @hidden Set aria-setsize and aria-poinset attributes */
+    private _setAriaSize(): void {
+        if (!this.ariaSetsize) {
+            this.ariaSetsize = this.listItems.length;
+
+            for (let i = 0; i < this.listItems.length; i++) {
+                this.listItems.get(i).ariaPosinet = i + 1;
+            }
+
+            this._cd.markForCheck();
+        }
     }
 }
 
