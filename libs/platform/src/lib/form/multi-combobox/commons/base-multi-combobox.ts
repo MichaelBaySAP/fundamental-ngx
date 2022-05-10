@@ -97,7 +97,7 @@ export abstract class BaseMultiCombobox extends CollectionBaseInput implements O
 
     /** Datasource for suggestion list. */
     @Input()
-    dataSource: any;
+    dataSource: FdpMultiComboboxDataSource<any>;
 
     /** Whether the autocomplete should be enabled; Enabled by default. */
     @Input()
