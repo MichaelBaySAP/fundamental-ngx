@@ -67,7 +67,7 @@ import {
 import { TextAlignment } from '../../combobox';
 import { MultiComboboxConfig } from '../multi-combobox.config';
 
-export const MAP_LIMIT = new InjectionToken<number>('Map limit≥');
+export const MAP_LIMIT = new InjectionToken<number>('Map limit≥', { factory: () => 12 });
 
 export type FdpMultiComboboxDataSource<T> = MultiComboBoxDataSource<T> | Observable<T[]> | T[];
 
