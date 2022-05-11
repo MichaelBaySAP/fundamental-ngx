@@ -274,6 +274,7 @@ export class SliderComponent
     _progress = 0;
 
     /** @hidden */
+    @HostBinding('class.fd-slider--range')
     _isRange = false;
 
     /** @hidden */
@@ -439,6 +440,7 @@ export class SliderComponent
         return [
             'fd-slider',
             this.disabled ? 'is-disabled' : '',
+            this._isRange ? 'fd-slider--range' : '',
             this.showTicks && this.showTicksLabels ? 'fd-slider--with-labels' : '',
             this.class,
             this._platform.EDGE || this._platform.TRIDENT ? 'fd-slider__alternative-tick-width' : ''
