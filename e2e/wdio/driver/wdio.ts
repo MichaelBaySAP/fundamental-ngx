@@ -61,7 +61,19 @@ export function goBack(): void {
     browser.back();
 }
 
-export function refreshPage(): void {
+export function refreshPage(isFullRefresh = false): void {
+    if (!isFullRefresh) {
+        const url = browser.getUrl();
+        click(`#toolbar-home-btn`);
+        const newUrl = browser.getUrl();
+        if (newUrl.includes(`/home`)) {
+            goBack();
+            return;
+        } else {
+            // failed to navigate, reset the url and perform full page refresh
+            browser.url(url);
+        }
+    }
     browser.refresh();
     if (browserIsSafari()) {
         pause();
